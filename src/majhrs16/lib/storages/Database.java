@@ -1,8 +1,8 @@
 package majhrs16.lib.storages;
 
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Connection;
 
 public abstract class Database {
 	protected Connection conn;

@@ -3,9 +3,9 @@ package majhrs16.lib.shell;
 import majhrs16.lib.utils.Str;
 
 public class ProgressBar {
-	private int max;
 	private int width;
 	private double i;
+	private int max;
 
 	public ProgressBar(int max, int width) {
 		this.max = max;

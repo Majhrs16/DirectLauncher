@@ -9,7 +9,7 @@ import java.util.Map;
 public class Data implements Cloneable {
     public Data() {}
     
-    public String join(String... paths) {
+    public static String join(String... paths) {
         Path result = Paths.get(paths[0]);
 
         for (int i = 1; i < paths.length; i++) {

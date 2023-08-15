@@ -1,8 +1,6 @@
 package majhrs16.dl;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.jline.keymap.BindingReader;
@@ -11,37 +9,19 @@ import org.jline.terminal.TerminalBuilder;
 
 import majhrs16.lib.utils.Str;
 
-public class CLI {
-    public Map<String, String[]> versions;
+public class CLI { // FRCASO.
     private boolean exit;
     private String input;
-    private Data D;
 
-    public CLI(Data D) {
-        versions = new HashMap<>();
+    public CLI() {
         input = "> ";
-        this.D = D;
+        exit = false;
     }
 
     public void start() {
-        exit = false;
-
-        Thread searchThread = new Thread(this::searchVersions);
-        searchThread.setDaemon(true);
-        searchThread.start();
-
-//        Thread showThread = new Thread(this::show);
-//        showThread.start();
+        Thread showThread = new Thread(this::show);
+        showThread.start();
     }
-
-    public void searchVersions() {
-        while (!exit) {
-            versions = getVersions(".json");
-
-            try { Thread.sleep(1000);
-            } catch (InterruptedException e) { ; }
-        }
-    }    
 
     public Terminal createTerminal() {
         try {
@@ -74,13 +54,13 @@ public class CLI {
             sb.append("║" + Str.center("DirectLauncher b1.5", x - 2) + "║\n");
             sb.append("╠" + Str.repeat("═", x - 2) + "╣\n");
 
-            if (versions.isEmpty()) {
+            if (Main.vm.versions.isEmpty()) {
                 sb.append("║ " + Str.ljust("Buscando versiones instaladas...", x - 3, " ") + "║\n");
 
             } else {
                 sb.append("║ " + Str.ljust("Por favor, presione el número que corresponda a su versión:", x - 3, " ") + "║\n");
                 int i = 1;
-                for (Map.Entry<String, String[]> entry : versions.entrySet()) {
+                for (Map.Entry<String, String[]> entry : Main.vm.versions.entrySet()) {
                     String version = entry.getValue()[0];
                     sb.append("║ " + Str.ljust(i + ") " + version, x - 3, " ") + "║\n");
                     i++;
@@ -141,7 +121,7 @@ public class CLI {
 
                 input = "> " + key;
 
-                if (key.equals("0") || versions.containsKey(key)) {
+                if (key.equals("0") || Main.vm.versions.containsKey(key)) {
                     terminal.close();
                     break;
                 }
@@ -153,27 +133,4 @@ public class CLI {
 
         return key;
     }
-
-    private Map<String, String[]> getVersions(String... exts) {
-    	Map<String, String[]> versions = new HashMap<>();
-        int i = 1;
-        for (String ext : exts) {
-            File[] files = new File(D.MC, "versions").listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    File[] versionFiles = file.listFiles((dir, name) -> name.endsWith(ext));
-                    if (versionFiles != null) {
-                        for (File versionFile : versionFiles) {
-                            String versionName = versionFile.getName();
-                            String version = versionName.substring(0, versionName.lastIndexOf(ext));
-                            versions.put(String.valueOf(i), new String[]{version, versionFile.getAbsolutePath()});
-                            i++;
-                        }
-                    }
-                }
-            }
-        }
-        return versions;
-    }
-
 }

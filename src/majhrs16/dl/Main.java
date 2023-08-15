@@ -1,5 +1,12 @@
 package majhrs16.dl;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import javax.swing.SwingUtilities;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -10,6 +17,14 @@ import org.apache.commons.cli.ParseException;
 import majhrs16.lib.shell.commandline.Executor;
 
 public class Main {
+	public static boolean exit            = false;
+	public static Data D                  = new Data();
+	public static final VersionManager vm = new VersionManager();
+
+	public static final String name       = "DirectLauncher";
+	public static final String version    = "b1.9";
+	public static final GUI gui           = new GUI();
+
 	public static void main(String[] args) {
 		Options options = new Options();
 		options.addOption("h", "help", false, "Muestra este mensaje de ayuda.");
@@ -17,8 +32,8 @@ public class Main {
 		options.addOption("debug", false, "Opcion para desarrolladores.");
 		options.addOption("nick", true, "Nombre del jugador");
 
-		Data D = new Data();
-		
+		boolean isDOS = false;
+
 		CommandLineParser parser = new DefaultParser();
 		try {
 			CommandLine cmd = parser.parse(options, args);
@@ -27,13 +42,14 @@ public class Main {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp("DirectLauncher", options);
 			}
-			
+
 			if (cmd.hasOption("nick")) {
 				D.Nick = cmd.getOptionValue("nick");
 			}
-			
+
 			if (cmd.hasOption("version")) {
 				D.Version = cmd.getOptionValue("version");
+				isDOS = true;
 			}
 
 		} catch (ParseException e) {
@@ -41,27 +57,50 @@ public class Main {
 			return;
 		}
 
-        /*// EN DESARROLLO!
-        CLI cli = new CLI(D);
-        cli.start();
-        String key = cli.getKey();
-    	cli.stop();
-        if (key.equals("0"))
-        	return;
-        else
-        	System.out.println(cli.versions.get(key)[0]);
-       	*/
+		if (isDOS) {
+			launch(D.Version);
 
+		} else {
+			vm.start();
+			gui.updateListBox();
+
+			SwingUtilities.invokeLater(() -> {
+				gui.frame.setSize(800, 600);
+				gui.frame.setVisible(true);
+			});
+		}
+	}
+
+	public static void exit() {
+		System.exit(0);
+	}
+
+	public static void launch(String version) {
 		Updater up = new Updater();
-		if (up.updateData(D)) {
-			try {
-				String s = D.format().toString();
-				System.out.println("\n" + s);
-				Executor.execute(s);
-			} catch (CloneNotSupportedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		D.Version = version;
+
+		String filename = D.Version + (D._sep.equals("/") ? ".sh" : ".bat");
+		File file = new File(D.MC, filename);
+
+		if (!file.exists()) {
+			if (up.updateData()) {
+				try {
+					String commandLine = D.format().toString();
+
+					try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+						writer.write(commandLine);
+
+					} catch (IOException e) {
+						System.out.println("Error al escribir el acceso directo para la version: " + D.Version);
+						e.printStackTrace();
+					}
+
+				} catch (CloneNotSupportedException e) {
+					e.printStackTrace();
+				}
 			}
 		}
+
+		Executor.execute((D._sep.equals("/") ? "bash " : "cmd /c ") + filename);
 	}
 }

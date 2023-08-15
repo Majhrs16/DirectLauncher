@@ -1,15 +1,15 @@
 package majhrs16.lib.storages;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.io.File;
-
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.yaml.snakeyaml.scanner.ScannerException;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.File;
 
 public class YAML {
 	private JavaPlugin plugin;
