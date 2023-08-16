@@ -1,20 +1,21 @@
 package majhrs16.dl;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-
-import javax.swing.SwingUtilities;
-
-import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 import majhrs16.lib.shell.commandline.Executor;
+import majhrs16.lib.utils.InfOS;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.FileWriter;
+import java.io.File;
+
+import javax.swing.SwingUtilities;
 
 public class Main {
 	public static boolean exit            = false;
@@ -22,7 +23,7 @@ public class Main {
 	public static final VersionManager vm = new VersionManager();
 
 	public static final String name       = "DirectLauncher";
-	public static final String version    = "b1.9";
+	public static final String version    = "b2.0";
 	public static final GUI gui           = new GUI();
 
 	public static void main(String[] args) {
@@ -79,7 +80,7 @@ public class Main {
 		Updater up = new Updater();
 		D.Version = version;
 
-		String filename = D.Version + (D._sep.equals("/") ? ".sh" : ".bat");
+		String filename = D.Version + (InfOS.getType().equals("linux") ? ".sh" : ".bat");
 		File file = new File(D.MC, filename);
 
 		if (!file.exists()) {
@@ -93,14 +94,20 @@ public class Main {
 					} catch (IOException e) {
 						System.out.println("Error al escribir el acceso directo para la version: " + D.Version);
 						e.printStackTrace();
+						return;
 					}
 
 				} catch (CloneNotSupportedException e) {
 					e.printStackTrace();
+					return;
 				}
+
+			} else {
+				System.out.println("Error al convertir la version: " + D.Version);
+				return;
 			}
 		}
 
-		Executor.execute((D._sep.equals("/") ? "bash " : "cmd /c ") + filename);
+		Executor.execute((InfOS.getType().equals("linux") ? "bash " : "cmd /c ") + filename);
 	}
 }

@@ -1,24 +1,14 @@
 package majhrs16.dl;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import majhrs16.lib.utils.files.FilePath;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.io.File;
 
 public class Data implements Cloneable {
     public Data() {}
-    
-    public static String join(String... paths) {
-        Path result = Paths.get(paths[0]);
 
-        for (int i = 1; i < paths.length; i++) {
-            result = result.resolve(paths[i]);
-        }
-
-        return result.toString();
-    }
-    
     public String _format(Data D, String s) {
         Map<String, String> data = new HashMap<>();
         data.put("Debug", D.Debug.toString());
@@ -74,13 +64,13 @@ public class Data implements Cloneable {
     public String MinRam = "1G";
     public String MaxRam = "1G";
     public String MC = System.getProperty("user.dir");
-    public String Lib = join("{Data.MC}", "libraries");
+    public String Lib = FilePath.join("{Data.MC}", "libraries");
     public String[] CLASSPATH = {
-		join("{Data.Lib}", "log4j-core-2.17.0.jar"),
-        join("{Data.Lib}", "log4j-api-2.17.0.jar"),
-        join("{Data.MC}", "versions", "{Data.Version}", "{Data.Version}.jar"),
+    	FilePath.join("{Data.Lib}", "log4j-core-2.17.0.jar"),
+    	FilePath.join("{Data.Lib}", "log4j-api-2.17.0.jar"),
+    	FilePath.join("{Data.MC}", "versions", "{Data.Version}", "{Data.Version}.jar"),
     };
-    public String Natives = join("{Data.MC}", "versions", "{Data.Version}", "natives");
+    public String Natives = FilePath.join("{Data.MC}", "versions", "{Data.Version}", "natives");
     public String MainClass = "net.minecraft.client.main.Main";
     public String Nick = "";
     public String Token = "null";
@@ -125,12 +115,12 @@ public class Data implements Cloneable {
 //          "-Dorg.lwjgl.opengl.Display.setFullscreen=true", // Innecesario
             "-Djava.library.path={Data.Natives}",
             "-cp {Data.CLASSPATH}",
-            "-Dlog4j.configurationFile=" + join("{Data.Lib}", "client-1.7.xml")
+            "-Dlog4j.configurationFile=" + FilePath.join("{Data.Lib}", "client-1.7.xml")
     	};
     	
     	public String[] MC = {
-            "--gameDir " + join("{Data.MC}", "{Data.Version}"),
-            "--assetsDir " + join("{Data.MC}", "assets"),
+            "--gameDir " + FilePath.join("{Data.MC}", "{Data.Version}"),
+            "--assetsDir " + FilePath.join("{Data.MC}", "assets"),
             "{Data.Nick}",
             "--accessToken {Data.Token}",
             "--version \"{Data.Version}\"",

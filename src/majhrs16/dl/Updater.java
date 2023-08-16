@@ -2,6 +2,7 @@ package majhrs16.dl;
 
 import majhrs16.lib.utils.files.Downloader;
 import majhrs16.lib.utils.files.FilePath;
+import majhrs16.lib.utils.InfOS;
 import majhrs16.lib.utils.SizeConverter;
 import majhrs16.lib.shell.ProgressBar;
 import majhrs16.lib.utils.Str;
@@ -42,7 +43,7 @@ public class Updater {
 
 	public boolean updateData() {
 		Data D = Main.D;
-		String filePath = Data.join(D.MC, "versions", D.Version, D.Version + ".json");
+		String filePath = FilePath.join(D.MC, "versions", D.Version, D.Version + ".json");
 
 		ProgressBar total = new ProgressBar(5);
 
@@ -63,7 +64,8 @@ public class Updater {
 				processAssetIndex(json.getJSONObject("assetIndex"));
 
 			} catch (JSONException e) {
-				total.set(2); show(total, "[ FAIL ] Procesando JSON");
+				total.set(2); show(total, "[ FAIL ] Procesando JSON\n");
+				e.printStackTrace();
 				return false;
 			}
 
@@ -73,7 +75,6 @@ public class Updater {
 
 			} catch (JSONException e) {
 				total.set(2); show(total, "[ FAIL ] Procesando JSON");
-				return false;
 			}
 
 		total.set(4); show(total, "[ .... ] Procesando JSON");
@@ -81,11 +82,12 @@ public class Updater {
 				processLibraries(json.getJSONArray("libraries"), D);
 
 			} catch (JSONException e) {
-				total.set(2); show(total, "[ FAIL ] Procesando JSON");
+				total.set(2); show(total, "[ FAIL ] Procesando JSON\n");
+				e.printStackTrace();
 				return false;
 			}
 
-		CP.add(Data.join("{Data.MC}", "versions", "{Data.Version}", "{Data.Version}.jar"));
+		CP.add(FilePath.join("{Data.MC}", "versions", "{Data.Version}", "{Data.Version}.jar"));
 		D.CLASSPATH = CP.toArray(new String[0]);
 
 		total.set(5); show(total, "[  OK  ] Procesando JSON");
@@ -114,10 +116,10 @@ public class Updater {
 		file_name = FilePath.getFileNameFromURL(url);
 
 		try {
-			downloadLibrary(D, Data.join(D.MC, "assets", "indexes"), url, sha1, size, file_name);
+			downloadLibrary(D, FilePath.join(D.MC, "assets", "indexes"), url, sha1, size, file_name);
 
-		} catch (IOException e1) {
-			e1.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -130,7 +132,7 @@ public class Updater {
 		file_name = D.Version + ".jar";
 
 		try {
-			downloadLibrary(D, Data.join(D.MC, "versions", D.Version), url, sha1, size, file_name);
+			downloadLibrary(D, FilePath.join(D.MC, "versions", D.Version), url, sha1, size, file_name);
 
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -141,7 +143,11 @@ public class Updater {
 		ProgressBar libs = new ProgressBar(librariesArray.length());
 		for (int i = 0; i < librariesArray.length(); i++) {
 			JSONObject libraryObj = librariesArray.getJSONObject(i);
-			String name = libraryObj.getString("name");
+			String name           = libraryObj.getString("name");
+			String[] _path        = name.split(":");
+			_path[0]              = _path[0].replace("\\.", ":");
+			String path           = D._format(D, FilePath.join("{Data.Lib}", FilePath.join(_path)));
+
 			try {
 				downloadsObj = libraryObj.getJSONObject("downloads");
 				artifactObj  = downloadsObj.getJSONObject("artifact");
@@ -151,13 +157,30 @@ public class Updater {
 				file_name    = FilePath.getFileNameFromURL(url);
 
 			} catch (JSONException e) {
-				file_name = "*";
-			}
+				try {
+					downloadsObj = libraryObj.getJSONObject("downloads");
+					JSONObject classifiersObj = downloadsObj.getJSONObject("classifiers");
+					JSONObject nativesObj = classifiersObj.getJSONObject(
+						libraryObj.getJSONObject("natives").getString(InfOS.getType().replace("mac", "osx"))
+					);
+					url          = nativesObj.getString("url");
+					sha1         = nativesObj.getString("sha1");
+					size         = nativesObj.getInt("size");
+					file_name    = FilePath.getFileNameFromURL(url);
 
-			String[] _path = name.split(":");
-			_path[0] = _path[0].replace("\\.", ":");
-			String path = D._format(D, Data.join("{Data.Lib}", Data.join(_path)));
-			String FN = Data.join(path, file_name);
+					libs.set(i + 1);
+					show(libs, "[ .... ] Procesando librerias nativas");
+
+					downloadLibrary(D, path, url, sha1, size, file_name);
+
+					JarExtractor.extract(FilePath.join(path, file_name), D._format(D, D.Natives));
+
+				} catch (JSONException | IOException e2) {
+					e2.printStackTrace();
+				}
+
+				continue;
+			}
 
 			libs.set(i + 1);
 			show(libs, "[ .... ] Procesando librerias");
@@ -166,10 +189,11 @@ public class Updater {
 				downloadLibrary(D, path, url, sha1, size, file_name);
 
 			} catch (IOException e) {
+				e.printStackTrace();
 				continue;
 			}
 
-			CP.add(FN);
+			CP.add(FilePath.join(path, file_name));
 		}
 
 		show(libs, "[  OK  ] Procesando librerias");
@@ -180,6 +204,8 @@ public class Updater {
 			// Manejar caso especial
 			return;
 		}
+
+		FilePath.makedirs(path);
 
 		File file = new File(path, fileName);
 		if (file.exists()) {
@@ -204,11 +230,12 @@ public class Updater {
 		});
 
 		try {
-			downloader.downloadFile(url, Data.join(path, fileName));
-			System.out.print(Str.ljust(setWidth(download.show() + " [  OK  ] Descargando '" + fileName + "'"), width, " "));
+			downloader.downloadFile(url, FilePath.join(path, fileName));
+			show(download, "[  OK  ] Descargando '" + fileName + "'");
 
 		} catch (IOException e) {
-			System.out.print(Str.ljust(setWidth(download.show() + " [ FAIL ] Descargando '" + fileName + "'"), width, " "));
+			show(download, "[ FAIL ] Descargando '" + fileName + "'\n");
+			e.printStackTrace();
 		}
 	}
 }
