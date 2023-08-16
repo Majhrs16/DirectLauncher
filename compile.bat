@@ -17,7 +17,8 @@ Cls && Echo DirectLauncher OK.
 Goto Exit
 
 :Error
-Echo HA OCURRIDO UN ERROR: %ERRORLEVEL%
+Echo HA OCURRIDO UN ERROR:
+Echo 	%ERRORLEVEL%
 
 :Exit
 Pause

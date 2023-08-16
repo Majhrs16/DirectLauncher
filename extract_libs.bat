@@ -1,6 +1,7 @@
 cd bin
 jar xf ..\libs\commons-cli*.jar || Goto Error
 jar xf ..\libs\org.json*.jar || Goto Error
+jar xf ..\libs\Majhrs16.Lib.jar || Goto Error
 rmdir /S /Q META-INF || Goto Error
 del VERSION
 cd ..
